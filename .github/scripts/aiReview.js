@@ -1,4 +1,4 @@
-import { Octokit } from "@octokit/rest"; // npm install @octokit/rest
+import { Octokit } from "@octokit/rest";
 
 (async () => {
   try {
@@ -7,7 +7,7 @@ import { Octokit } from "@octokit/rest"; // npm install @octokit/rest
 
     const repoOwner = process.env.GITHUB_REPOSITORY.split("/")[0];
     const repoName = process.env.GITHUB_REPOSITORY.split("/")[1];
-    const issueNumber = process.env.ISSUE_NUMBER; // Actions の env 等で指定
+    const issueNumber = process.env.ISSUE_NUMBER;
 
     const octokit = new Octokit({ auth: githubToken });
     const { data: issue } = await octokit.rest.issues.get({
