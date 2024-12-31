@@ -1,0 +1,12 @@
+name: Issue AI Review
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  ai_issue_review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print "hoge"
+        run: echo "hoge"
