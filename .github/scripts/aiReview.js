@@ -52,7 +52,7 @@ ${issueBody}
 
     const llm = new ChatOpenAI({
       openAIApiKey: openAiKey,
-      modelName: "gpt-4", // or any models / https://openai.com/ja-JP/api/pricing/
+      modelName: "gpt-4o-mini", // or any models / https://openai.com/ja-JP/api/pricing/
       temperature: 0.0,
     });
 
