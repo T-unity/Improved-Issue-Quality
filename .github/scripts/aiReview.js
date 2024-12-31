@@ -1,6 +1,5 @@
-// https://github.com/octokit
 import { Octokit } from "@octokit/rest";
-import { ChatOpenAI } from "langchain/chat_models/openai";
+import { Configuration, OpenAIApi } from "openai";
 
 (async () => {
   try {
@@ -50,18 +49,22 @@ Issue本文:
 ${issueBody}
 `;
 
-    const llm = new ChatOpenAI({
-      openAIApiKey: openAiKey,
-      modelName: "gpt-4o-mini", // or any models / https://openai.com/ja-JP/api/pricing/
+    const configuration = new Configuration({
+      apiKey: openAiKey, // これが OPENAI_API_KEY
+    });
+    const openai = new OpenAIApi(configuration);
+    const modelName = "gpt-4o-mini";
+
+    const response = await openai.createChatCompletion({
+      model: modelName,
+      messages: [
+        { role: "system", content: guideline },
+        { role: "user", content: prompt }
+      ],
       temperature: 0.0,
     });
 
-    const response = await llm.call([
-      { role: "system", content: guideline },
-      { role: "user", content: prompt }
-    ]);
-
-    const reviewMessage = response.text;
+    const reviewMessage = response.data.choices[0]?.message?.content ?? "";
 
     await octokit.rest.issues.createComment({
       owner: repoOwner,
