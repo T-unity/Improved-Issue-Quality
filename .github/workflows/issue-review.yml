@@ -4,9 +4,30 @@ on:
   issues:
     types: [opened]
 
+permissions:
+  issues: write
+  contents: read
+
 jobs:
   ai_issue_review:
     runs-on: ubuntu-latest
     steps:
-      - name: Print "hoge"
-        run: echo "hoge"
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Set ISSUE_NUMBER env
+        run: echo "ISSUE_NUMBER=${{ github.event.issue.number }}" >> $GITHUB_ENV
+
+      - name: Run AI Review Script
+        run: node .github/scripts/aiReview.js
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
