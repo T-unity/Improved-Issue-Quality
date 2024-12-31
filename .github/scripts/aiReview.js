@@ -1,18 +1,15 @@
-import { Octokit } from "@octokit/rest";
-import { Configuration, OpenAIApi } from "openai";
+import { Octokit } from "@octokit/rest"; // npm install @octokit/rest
 
 (async () => {
   try {
-    const token = process.env.GITHUB_TOKEN;
+    const githubToken = process.env.GITHUB_TOKEN;
     const openAiKey = process.env.OPENAI_API_KEY;
+
     const repoOwner = process.env.GITHUB_REPOSITORY.split("/")[0];
     const repoName = process.env.GITHUB_REPOSITORY.split("/")[1];
-    const issueNumber = process.env.ISSUE_NUMBER;
+    const issueNumber = process.env.ISSUE_NUMBER; // Actions の env 等で指定
 
-    // build Octokit instance
-    const octokit = new Octokit({ auth: token });
-
-    // get Issue details
+    const octokit = new Octokit({ auth: githubToken });
     const { data: issue } = await octokit.rest.issues.get({
       owner: repoOwner,
       repo: repoName,
@@ -22,24 +19,19 @@ import { Configuration, OpenAIApi } from "openai";
     const issueTitle = issue.title;
     const issueBody = issue.body;
 
-    // build prompt
-    // TODO: 別ファイルで管理する。
     const guideline = `
 あなたは issue レビューのエキスパートです。以下のガイドラインに基づいて、
 issue の内容（タイトル、本文）に対する評価・改善点を出力してください。
 
 【ガイドライン要約】
   1. 問題/目的が明確であるか？
-    - 読んだだけで大体の内容が分かるような簡潔なタイトルが設定されているか。
-    - 「なにが問題なのか」「なにを解決したいのか」が簡潔に設定されているか。
-  1. 再現手順/環境情報が具体的であるか？
-    - 「ある画面でボタンを押す → エラーが起きる」というように、誰でも同じ条件で問題を再現できるように手順が記載されているか。
-    - OS、ブラウザ、ライブラリバージョンなど、問題が起きた際の環境が明記されているか。
-  1. 期待する結果・実際の結果が明示されているか？
-    - 「本来こうあるはず」と思っている結果を明確に記載されているか。
-    - 実際には何が起きたのか、が正確に記載されているか。
-  1. （Optional）スクリーンショット・ログが必要に応じて添付されているか？
-  1. （Optional）既存の issue, PR にリンクされているか？
+    - 「なにが問題なのか」「なにを解決したいのか」が簡潔に設定されているか？
+  2. 再現手順/環境情報が具体的か？
+    - 誰でも同じ条件で問題を再現できるように手順や環境が書かれているか？
+  3. 期待する結果・実際の結果が明示されているか？
+    - 何が起きるはずで、実際には何が起きているのかが明記されているか？
+  4. （Optional）スクリーンショット・ログが必要に応じて添付されているか？
+  5. （Optional）既存の issue, PR にリンクされているか？
 `;
 
     const prompt = `
@@ -49,22 +41,27 @@ Issue本文:
 ${issueBody}
 `;
 
-    const configuration = new Configuration({
-      apiKey: openAiKey, // これが OPENAI_API_KEY
-    });
-    const openai = new OpenAIApi(configuration);
-    const modelName = "gpt-4o-mini";
-
-    const response = await openai.createChatCompletion({
-      model: modelName,
+    const endpoint = "https://api.openai.com/v1/chat/completions";
+    const requestBody = {
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: guideline },
-        { role: "user", content: prompt }
+        { role: "user", content: prompt },
       ],
       temperature: 0.0,
+    };
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openAiKey}`,
+      },
+      body: JSON.stringify(requestBody),
     });
 
-    const reviewMessage = response.data.choices[0]?.message?.content ?? "";
+    const data = await response.json();
+    const reviewMessage = data?.choices?.[0]?.message?.content ?? "";
 
     await octokit.rest.issues.createComment({
       owner: repoOwner,
