@@ -1,6 +1,6 @@
 // https://github.com/octokit
-const { Octokit } = require("@octokit/rest");
-const { ChatOpenAI } = require("langchain/chat_models/openai");
+import { Octokit } from "@octokit/rest";
+import { ChatOpenAI } from "langchain/chat_models/openai";
 
 (async () => {
   try {
